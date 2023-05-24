@@ -1,6 +1,7 @@
 package com.example.bluetoothapplication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -10,19 +11,14 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toolbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
-import com.example.bluetoothapplication.R;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("ALL")
 public class ChatActivity extends AppCompatActivity {
 
     private Button mListenBtn;
@@ -61,8 +58,7 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar();
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -86,14 +82,22 @@ public class ChatActivity extends AppCompatActivity {
         implementListeners();
     }
 
-    private void setSupportActionBar(Toolbar toolbar) {
+    private void setSupportActionBar() {
 
     }
 
+    @SuppressLint("SetTextI18n")
     private void implementListeners() {
-        mListDevicesBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        mListDevicesBtn.setOnClickListener(v -> {
+
+            @SuppressLint("MissingPermission") Set<BluetoothDevice> bluetoothDevices = mBluetoothAdapter.getBondedDevices();
+            ArrayList<String> deviceNames = new ArrayList<>();
+            mBluetoothDevices = new BluetoothDevice[bluetoothDevices.size()];
+            int index = 0;
+
+
+            for (BluetoothDevice bluetoothDevice : bluetoothDevices) {
+                mBluetoothDevices[index] = bluetoothDevice;
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
@@ -104,52 +108,35 @@ public class ChatActivity extends AppCompatActivity {
                     // for ActivityCompat#requestPermissions for more details.
                     return;
                 }
-                Set<BluetoothDevice> bluetoothDevices = mBluetoothAdapter.getBondedDevices();
-                ArrayList<String> deviceNames = new ArrayList<>();
-                mBluetoothDevices = new BluetoothDevice[bluetoothDevices.size()];
-                int index = 0;
-
-
-                for (BluetoothDevice bluetoothDevice : bluetoothDevices) {
-                    mBluetoothDevices[index] = bluetoothDevice;
-                    deviceNames.add(bluetoothDevice.getName());
-                    index++;
-                }
-
-                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ChatActivity.this,
-                        android.R.layout.simple_list_item_1, deviceNames);
-                mDeviceListView.setAdapter(arrayAdapter);
+                deviceNames.add(bluetoothDevice.getName());
+                index++;
             }
+
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ChatActivity.this,
+                    android.R.layout.simple_list_item_1, deviceNames);
+            mDeviceListView.setAdapter(arrayAdapter);
         });
 
-        mListenBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ServerClass serverClass = new ServerClass();
-                serverClass.start();
-            }
+        mListenBtn.setOnClickListener(v -> {
+            ServerClass serverClass = new ServerClass();
+            serverClass.start();
         });
 
-        mDeviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ClientClass clientClass = new ClientClass(mBluetoothDevices[position]);
-                clientClass.start();
+        mDeviceListView.setOnItemClickListener((parent, view, position, id) -> {
+            ClientClass clientClass = new ClientClass(mBluetoothDevices[position]);
+            clientClass.start();
 
-                mStatusTv.setText("Connecting");
-            }
+            mStatusTv.setText("Connecting");
         });
 
-        mSendBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message = mMessageEt.getText().toString();
-                mSendReceive.write(message.getBytes());
-            }
+        mSendBtn.setOnClickListener(v -> {
+            String message = mMessageEt.getText().toString();
+            mSendReceive.write(message.getBytes());
         });
     }
 
     Handler mHandler = new Handler(new Handler.Callback() {
+        @SuppressLint("SetTextI18n")
         @Override
         public boolean handleMessage(Message msg) {
 
@@ -194,29 +181,9 @@ public class ChatActivity extends AppCompatActivity {
     public class ServerClass extends Thread {
         private BluetoothServerSocket mBluetoothServerSocket;
 
+        @SuppressLint("MissingPermission")
         public ServerClass() {
             try {
-                Object TODO;
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return TODO;
-                }
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return TODO;
-                }
                 mBluetoothServerSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, MY_UUID);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -226,7 +193,7 @@ public class ChatActivity extends AppCompatActivity {
         public void run(){
             BluetoothSocket bluetoothSocket = null;
 
-            while (bluetoothSocket == null){
+            while (true){
                 try {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTING;
@@ -255,18 +222,18 @@ public class ChatActivity extends AppCompatActivity {
 
     public class ClientClass extends Thread {
 
-        private BluetoothDevice mBluetoothDevice;
         private BluetoothSocket mBluetoothSocket;
 
+        @SuppressLint("MissingPermission")
         public ClientClass(BluetoothDevice bluetoothDevice){
-            mBluetoothDevice = bluetoothDevice;
             try {
-                mBluetoothSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(MY_UUID);
+                mBluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
+        @SuppressLint("MissingPermission")
         public void run(){
             try {
                 mBluetoothSocket.connect();
@@ -286,19 +253,17 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public class SendReceive extends Thread {
-        private final BluetoothSocket mBluetoothSocket;
         private final InputStream mInputStream;
         private final OutputStream mOutputStream;
 
         public SendReceive(BluetoothSocket bluetoothSocket){
 
-            mBluetoothSocket = bluetoothSocket;
             InputStream tempIn = null;
             OutputStream tempOut = null;
 
             try {
-                tempIn = mBluetoothSocket.getInputStream();
-                tempOut = mBluetoothSocket.getOutputStream();
+                tempIn = bluetoothSocket.getInputStream();
+                tempOut = bluetoothSocket.getOutputStream();
             } catch (IOException e){
                 e.printStackTrace();
             }
